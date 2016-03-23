@@ -7,11 +7,12 @@ function parseLTSVLog(str){
 		.map(line => {
 			return line
 				.split('\t')
-				.map((attr) => {
+				.filter(data => data !== '')
+				.map((attr) => { //':'で分割し[key, value]の形で返すvalueが数値だった場合、数値形にする
 					const [key, value] = attr.split(':')
 					return [key, isFinite(value) ? Number(value) : value]
 				})
-				.reduce((obj, keyValue) => {
+				.reduce((obj, keyValue) => { //[key, value]をオブジェクトに変換する
 					const [key, value] = keyValue
 					return Object.assign({}, obj, {
 						[key]: value
@@ -27,7 +28,7 @@ function parseLTSVLog(str){
  * @param  {String} name     HTML tag name
  * @param  {Object} props    attributes
  * @param  {Array}  children 
- * @return {HTMLElement}          HTMLElement
+ * @return {HTMLElement}     HTMLElement
  */
 function createElement(name, props = {}, children = []){
 	const element = document.createElement(name)
@@ -38,9 +39,8 @@ function createElement(name, props = {}, children = []){
 	return element
 }
 
-function createLogTable(container, data){
-
-	const labels = data.reduce((labels, record) => {
+function getLabels(arr){
+	return arr.reduce((labels, record) => {
 		Object.keys(record).forEach(label => {
 			if(labels.indexOf(label) < 0){
 				labels.push(label)
@@ -48,6 +48,11 @@ function createLogTable(container, data){
 		})
 		return labels
 	}, [])
+}
+
+function createLogTable(container, data){
+
+	const labels = getLabels(data)
 
 	const table = createElement('table', {}, [
 		createElement('thead', {}, [
@@ -55,7 +60,7 @@ function createLogTable(container, data){
 		]),
 		createElement('tbody', {},
 			data.map(record => createElement('tr', {}, 
-				Object.keys(record).map(key => createElement('td', {}, [record[key]])))
+				labels.map(key => createElement('td', {}, [record[key] || ''])))
 			)
 		)
 	])
